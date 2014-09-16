@@ -8,6 +8,11 @@ require 'forecast_io'
 require 'geocoder'
 require 'net/http'
 require 'uri'
+require "fileutils"
+require_relative 'logplus'
+
+FileUtils.mkdir_p("/tmp/logs/plainlogs")
+FileUtils.mkdir_p("/tmp/logs/htmllogs")
 
 # class Numeric
 
@@ -42,7 +47,7 @@ end
 
 class Google
   include Cinch::Plugin
-  match /google (.+)/
+  match /g (.+)/
 
   def search(query)
     url = "http://www.google.com/search?q=#{CGI.escape(query)}"
@@ -283,7 +288,7 @@ class Bookmark
 
   def execute(m, query)
     if query.split.length >1
-      re = /(\w*)\s(\w*)\s?(.*)/ #splits string into 3 parts !bookmark [key] [definition]
+      re = /(\w*)\s(\S*)\s?(.*)/ #splits string into 3 parts !bookmark [key] [definition]
       v = query.match re
       if v[1] == "bookmark"
         # @bookmarks[v[2]] ||= []
@@ -296,9 +301,11 @@ class Bookmark
           update_bookmarks
         end
       elsif v[1] == "unmark"  
-          @bookmarks.delete(v[2])
+          @bookmarks.delete v[2]
           m.reply "Removed " + v[2]
-      end   
+          
+      end
+      update_bookmarks   
     else 
       v = query
       msg = @bookmarks[v]
@@ -327,12 +334,18 @@ end
 
 bot = Cinch::Bot.new do
   configure do |c|
-    c.nick = "t100"
-    c.server = "dickson.freenode.net"
-    c.channels = ["#femalefashionadvice"]
-    #c.channels = ["#ffatest"]
-    c.plugins.plugins = [Google, DoMath, UrbanDictionary, Wolframsearch, Memo, Weather, Cat, Bookmark]
-    c.plugins.prefix = /^\S*\./
+    c.nick = "botimus "
+    c.server = "tepper.freenode.net"
+    #c.channels = ["#femalefashionadvice"]
+    c.channels = ["#ffatest"]
+    c.plugins.plugins = [Google, DoMath, UrbanDictionary, Wolframsearch, Memo, Weather, Cat, Bookmark, Cinch::LogPlus]
+    c.plugins.prefix = /^\./
+    config.plugins.options[Cinch::LogPlus] = {
+     :plainlogdir => "/tmp/logs/plainlogs", # required
+     :htmllogdir  => "/tmp/logs/htmllogs", # required
+     :timelogformat => "%H:%M",
+     :extrahead => ""
+   }
   end
 
   on :message, "hi" do |m|
