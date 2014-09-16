@@ -259,10 +259,11 @@ class Weather
    
     current_temp = weather.currently.temperature.round
     current = weather.currently.summary
+    humidity = weather.currently.humidity * 100
     tomorrow = weather.daily.data[1].summary
     tomorrow_lowtemp = weather.daily.data[1].temperatureMin.round
     tomorrow_hightemp = weather.daily.data[1].temperatureMax.round
-    address + ": Now: #{current}, #{current_temp}°C" + " (#{celsius_to_fahrenheit(current_temp.to_i)}°F)" + " Tomorrow: #{tomorrow} #{tomorrow_lowtemp}-#{tomorrow_hightemp}°C" + " (#{celsius_to_fahrenheit(tomorrow_lowtemp.to_i)}-#{celsius_to_fahrenheit(tomorrow_hightemp.to_i)}°F)" 
+    address + ": Now: #{current}, #{current_temp}°C" + " (#{celsius_to_fahrenheit(current_temp.to_i)}°F)" + " Humidity: #{{humidity.to_i}%}" + " Tomorrow: #{tomorrow} #{tomorrow_lowtemp}-#{tomorrow_hightemp}°C" + " (#{celsius_to_fahrenheit(tomorrow_lowtemp.to_i)}-#{celsius_to_fahrenheit(tomorrow_hightemp.to_i)}°F)" 
   rescue
     "You're silly, try again"
   end

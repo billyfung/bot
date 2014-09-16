@@ -2,8 +2,8 @@ require "forecast_io"
 require "geocoder"
 
 def celsius_to_fahrenheit(celsius)
-      celsius * 9 / 5 + 32
-    end
+  celsius * 9 / 5 + 32
+end
 
 ForecastIO.api_key = "3c15954606092982f23336badca3586b"
 
