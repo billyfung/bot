@@ -9,10 +9,11 @@ require 'geocoder'
 require 'net/http'
 require 'uri'
 require "fileutils"
+#require 'link_info'
 require_relative 'logplus'
 
-FileUtils.mkdir_p("/tmp/logs/plainlogs")
-FileUtils.mkdir_p("/tmp/logs/htmllogs")
+FileUtils.mkdir_p("/Temp/logs/plainlogs")
+FileUtils.mkdir_p("/Temp/logs/htmllogs")
 
 # class Numeric
 
@@ -259,11 +260,12 @@ class Weather
    
     current_temp = weather.currently.temperature.round
     current = weather.currently.summary
-    humidity = weather.currently.humidity * 100
+	humidity = weather.currently.humidity * 100
+	humidity = humidity.to_i
     tomorrow = weather.daily.data[1].summary
     tomorrow_lowtemp = weather.daily.data[1].temperatureMin.round
     tomorrow_hightemp = weather.daily.data[1].temperatureMax.round
-    address + ": Now: #{current}, #{current_temp}°C" + " (#{celsius_to_fahrenheit(current_temp.to_i)}°F)" + " Humidity: #{{humidity.to_i}%}" + " Tomorrow: #{tomorrow} #{tomorrow_lowtemp}-#{tomorrow_hightemp}°C" + " (#{celsius_to_fahrenheit(tomorrow_lowtemp.to_i)}-#{celsius_to_fahrenheit(tomorrow_hightemp.to_i)}°F)" 
+    address + ": Now: #{current}, #{current_temp}°C" + " (#{celsius_to_fahrenheit(current_temp.to_i)}°F)" + " Humidity: #{humidity}%" + " Tomorrow: #{tomorrow} #{tomorrow_lowtemp}-#{tomorrow_hightemp}°C" + " (#{celsius_to_fahrenheit(tomorrow_lowtemp.to_i)}-#{celsius_to_fahrenheit(tomorrow_hightemp.to_i)}°F)"
   rescue
     "You're silly, try again"
   end
@@ -333,17 +335,44 @@ class Bookmark
 
 end
 
+class LinkInfo
+  include Cinch::Plugin
+
+  # Default list of URL regexps to ignore.
+  DEFAULT_BLACKLIST = [/\.png$/i, /\.jpe?g$/i, /\.bmp$/i, /\.gif$/i, /\.pdf$/i].freeze
+
+  match %r{(https?://.*?)(?:\s|$|,|\.\s|\.$)}, :use_prefix => false
+
+  def execute(msg, url)
+    blacklist = DEFAULT_BLACKLIST.dup
+    blacklist.concat(config[:blacklist]) if config[:blacklist]
+
+    return if blacklist.any?{|entry| url =~ entry}
+    debug "URL matched: #{url}"
+    html = Nokogiri::HTML(open(url))
+
+    if node = html.at_xpath("html/head/title")
+      msg.reply("Title: #{node.text}")
+    end
+
+   
+  rescue => e
+    error "#{e.class.name}: #{e.message}"
+  end
+
+end
+
 bot = Cinch::Bot.new do
   configure do |c|
     c.nick = "botimus "
-    c.server = "tepper.freenode.net"
-    #c.channels = ["#femalefashionadvice"]
-    c.channels = ["#ffatest"]
-    c.plugins.plugins = [Google, DoMath, UrbanDictionary, Wolframsearch, Memo, Weather, Cat, Bookmark, Cinch::LogPlus]
+    c.server = "wolfe.freenode.net"
+    c.channels = ["#femalefashionadvice"]
+    #c.channels = ["#ffatest"]
+    c.plugins.plugins = [Google, DoMath, UrbanDictionary, Wolframsearch, Memo, Weather, Cat, Bookmark, Cinch::LogPlus, LinkInfo]
     c.plugins.prefix = /^\./
     config.plugins.options[Cinch::LogPlus] = {
-     :plainlogdir => "/tmp/logs/plainlogs", # required
-     :htmllogdir  => "/tmp/logs/htmllogs", # required
+     :plainlogdir => "/Temp/logs/plainlogs", # required
+     :htmllogdir  => "/Temp/logs/htmllogs", # required
      :timelogformat => "%H:%M",
      :extrahead => ""
    }
